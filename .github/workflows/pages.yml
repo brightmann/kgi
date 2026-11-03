@@ -33,8 +33,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: pnpm
+
+      - name: Diagnose Google Fonts fetch
+        run: |
+          UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          for fam in 'Mulish:wght@400;900' 'Montserrat:wght@300;400;600' 'Cutive+Mono'; do
+            echo "== $fam =="
+            curl -s -A "$UA" "https://fonts.googleapis.com/css2?family=${fam}&display=swap" -o /tmp/font.css
+            head -c 300 /tmp/font.css; echo
+            echo "-- non-font-extension URLs:"
+            grep -oE 'url\([^)]+\)' /tmp/font.css | grep -vE '\.(woff2?|eot|ttf|otf)\)' | head -3 || true
+          done
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
