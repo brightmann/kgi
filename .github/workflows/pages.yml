@@ -60,6 +60,7 @@ jobs:
           mv src/app/share .pages-exclude/share
           mv src/app/photography/photo .pages-exclude/photo
           mv src/app/photography/photos .pages-exclude/photos
+          mv src/app/photography/search .pages-exclude/photo-search
           mv "src/app/photography/[tag_id]/cover.png" ".pages-exclude/tag-cover.png"
           mv src/app/photography/favorites.png ".pages-exclude/favorites.png"
           mv "src/app/blog/[slug]/llms.txt" ".pages-exclude/post-llms.txt"
