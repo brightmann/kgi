@@ -1,0 +1,75 @@
+name: Deploy kgi to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+env:
+  MEETING_SCHEDULER_URL: https://example.com/meet
+  NEXT_PUBLIC_SNIPCART_KEY: placeholder
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Swap in Pages config and set aside server-only routes
+        run: |
+          cp next.config.pages.js next.config.js
+          mkdir -p .pages-exclude
+          mv src/app/api .pages-exclude/api
+          mv src/app/admin .pages-exclude/admin
+          mv src/app/r .pages-exclude/r
+          mv src/app/share .pages-exclude/share
+          mv src/app/photography/photo .pages-exclude/photo
+          mv "src/app/photography/[tag_id]/cover.png" ".pages-exclude/tag-cover.png"
+          mv src/app/photography/favorites.png ".pages-exclude/favorites.png"
+          mv "src/app/blog/[slug]/llms.txt" ".pages-exclude/post-llms.txt"
+
+      - name: Build static site
+        run: pnpm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
